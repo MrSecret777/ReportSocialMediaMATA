@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Posting Social Media MATA</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">M</div>
+          <div>
+            <p class="eyebrow">Dashboard operasi media sosial</p>
+            <h1>Posting Social Media <span>MATA</span></h1>
+            <p class="topbar-note">Rancang content, simpan idea, dan pantau approval dalam satu tempat.</p>
+          </div>
+        </div>
+        <nav class="top-nav" aria-label="Navigasi ringkas">
+          <a href="#contentView">Master</a>
+          <a href="#ideasView">Idea</a>
+          <a href="#platformFilter">Filter</a>
+          <a href="https://docs.google.com/spreadsheets/d/1jt_U2Muw7ZhofPnojPlLH6jgpMaqINwESZJgnczdZ8s/edit" target="_blank" rel="noreferrer">Sheets</a>
+        </nav>
+        <div class="topbar-actions">
+          <button class="icon-button" id="exportButton" title="Eksport data contoh" aria-label="Eksport data contoh">
+            <span aria-hidden="true">↓</span>
+          </button>
+          <button class="secondary-button" id="quickUploadButton">Upload File</button>
+          <input class="sr-only" id="quickUploadInput" type="file" multiple />
+          <button class="primary-button" id="addContentButton">+ Content</button>
+          <button class="secondary-button" id="addIdeaButton">+ Idea</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="control-band" aria-label="Kawalan dashboard">
+          <div>
+            <p class="eyebrow">Bulan aktif</p>
+            <div class="month-strip">
+              <div class="month-tabs" id="monthTabs"></div>
+              <button class="ghost-button" id="addMonthButton">+ Tambah bulan</button>
+            </div>
+          </div>
+          <div class="status-panel">
+            <span>Fasa frontend</span>
+            <strong>Data contoh</strong>
+          </div>
+        </section>
+
+        <section class="summary-grid" aria-label="Ringkasan bulan">
+          <article>
+            <span>Total Content</span>
+            <strong id="metricTotal">0</strong>
+          </article>
+          <article>
+            <span>Scheduled</span>
+            <strong id="metricScheduled">0</strong>
+          </article>
+          <article>
+            <span>Perlu Approval</span>
+            <strong id="metricApproval">0</strong>
+          </article>
+          <article>
+            <span>Idea Approved</span>
+            <strong id="metricIdeas">0</strong>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <aside class="filters-panel">
+            <div class="section-title">
+              <h2>Filter</h2>
+              <button class="text-button" id="resetFiltersButton">Reset</button>
+            </div>
+            <label>
+              Search
+              <input id="searchInput" type="search" placeholder="Cari tajuk, PIC, platform..." />
+            </label>
+            <label>
+              Platform
+              <select id="platformFilter"></select>
+            </label>
+            <label>
+              Pillar
+              <select id="pillarFilter"></select>
+            </label>
+            <label>
+              Status
+              <select id="statusFilter"></select>
+            </label>
+          </aside>
+
+          <section class="content-area">
+            <nav class="view-tabs" aria-label="Bahagian dashboard">
+              <button class="active" data-view="content">Content Master</button>
+              <button data-view="ideas">Idea Log</button>
+            </nav>
+
+            <div class="table-toolbar">
+              <div>
+                <h2 id="activeViewTitle">Content Master</h2>
+                <p id="activeViewSubtitle">Urus posting yang sudah dirancang untuk bulan ini.</p>
+              </div>
+              <span class="sheet-badge">Data contoh • Google Sheets selepas approval layout</span>
+            </div>
+
+            <div class="table-wrap" id="contentView">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tajuk Content</th>
+                    <th>Tarikh & Masa</th>
+                    <th>Platform</th>
+                    <th>Format</th>
+                    <th>Pillar</th>
+                    <th>Status</th>
+                    <th>PIC</th>
+                    <th>Approval</th>
+                  </tr>
+                </thead>
+                <tbody id="contentTable"></tbody>
+              </table>
+            </div>
+
+            <div class="table-wrap hidden" id="ideasView">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tajuk Idea</th>
+                    <th>Tarikh</th>
+                    <th>Pillar</th>
+                    <th>Format Cadangan</th>
+                    <th>Objektif</th>
+                    <th>Status Idea</th>
+                    <th>PIC</th>
+                    <th>Tindakan</th>
+                  </tr>
+                </thead>
+                <tbody id="ideaTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <aside class="drawer" id="detailDrawer" aria-hidden="true">
+      <div class="drawer-panel">
+        <div class="drawer-header">
+          <div>
+            <p class="eyebrow" id="drawerType">Content details</p>
+            <h2 id="drawerTitle">Tajuk</h2>
+          </div>
+          <button class="icon-button" id="closeDrawerButton" title="Tutup" aria-label="Tutup">×</button>
+        </div>
+        <div id="drawerBody"></div>
+      </div>
+    </aside>
+
+    <dialog id="itemDialog">
+      <form method="dialog" id="itemForm">
+        <div class="dialog-header">
+          <h2 id="dialogTitle">Tambah item</h2>
+          <button class="icon-button" value="cancel" type="submit" aria-label="Tutup">×</button>
+        </div>
+        <div class="form-grid" id="formFields"></div>
+        <menu>
+          <button class="secondary-button" value="cancel" type="submit">Batal</button>
+          <button class="primary-button" id="saveDialogButton" value="default" type="submit">Simpan</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
