@@ -62,7 +62,7 @@ button:disabled {
   border-radius: 26px;
   box-shadow: var(--shadow);
   margin: 20px;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 40px);
   overflow: hidden;
   padding: 30px clamp(22px, 3.2vw, 46px) 38px;
   position: relative;
@@ -237,8 +237,8 @@ menu {
 .text-button,
 .view-tabs button,
 .month-tabs button {
-  padding: 0 18px;
   font-size: 0.86rem;
+  padding: 0 18px;
 }
 
 .primary-button {
@@ -464,10 +464,7 @@ textarea {
   width: 100%;
 }
 
-textarea {
-  border-radius: var(--radius);
-}
-
+textarea,
 input[type="file"] {
   border-radius: var(--radius);
 }
@@ -865,80 +862,17 @@ menu {
   }
 }
 
+/* Mobile view */
 @media (max-width: 640px) {
+  body {
+    background: #252525;
+  }
+
   .app-shell {
-    border-radius: 18px;
+    border-radius: 20px;
     margin: 8px;
     min-height: calc(100vh - 16px);
-    padding: 22px 14px 26px;
-  }
-
-  .brand-lockup {
-    align-items: flex-start;
-  }
-
-  .brand-mark {
-    height: 42px;
-    width: 42px;
-  }
-
-  h1 {
-    font-size: clamp(2.25rem, 13vw, 3.75rem);
-  }
-
-  .eyebrow,
-  .top-nav a {
-    letter-spacing: 0.2em;
-  }
-
-  .summary-grid,
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .month-strip {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .month-tabs {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .view-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .topbar-actions {
-    display: grid;
-    grid-template-columns: 42px 1fr;
-  }
-
-  .primary-button,
-  .secondary-button,
-  .ghost-button,
-  .view-tabs button,
-  .month-tabs button {
-    min-width: 0;
-  }
-
-  th,
-  td {
-    padding: 12px;
-  }
-
-  .drawer-panel {
-    padding: 20px;
-  }
-}
-@media (max-width: 640px) {
-  .app-shell {
-    border-radius: 18px;
-    margin: 8px;
-    min-height: calc(100vh - 16px);
-    padding: 20px 14px 26px;
+    padding: 22px 16px 28px;
   }
 
   .app-shell::before,
@@ -948,59 +882,91 @@ menu {
   }
 
   .topbar {
-    gap: 16px;
-    margin-bottom: 22px;
+    display: block;
+    margin-bottom: 26px;
   }
 
   .brand-lockup {
     align-items: start;
     display: grid;
-    gap: 12px;
-    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 14px;
+    grid-template-columns: 48px minmax(0, 1fr);
+    margin-bottom: 28px;
   }
 
   .brand-mark {
-    font-size: 1.28rem;
-    height: 46px;
-    width: 46px;
-  }
-
-  h1 {
-    font-size: clamp(2.35rem, 12vw, 3.25rem);
-    line-height: 0.98;
-    margin-bottom: 14px;
-    max-width: 100%;
+    font-size: 1.35rem;
+    height: 48px;
+    width: 48px;
   }
 
   .eyebrow {
-    font-size: 0.68rem;
-    letter-spacing: 0.16em;
-    line-height: 1.45;
-    margin-bottom: 10px;
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: clamp(2.55rem, 12.2vw, 3.45rem);
+    line-height: 0.98;
+    margin-bottom: 18px;
+    max-width: 100%;
   }
 
   .topbar-note {
-    font-size: 0.96rem;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    max-width: 100%;
   }
 
   .topbar-actions {
     display: grid;
     gap: 10px;
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 52px 1fr;
+    margin-bottom: 26px;
     width: 100%;
   }
 
   .topbar-actions .icon-button {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid #ded6ca;
+    border-radius: 999px;
+    box-shadow: none;
+    color: var(--ink);
     grid-column: 1;
     grid-row: 1;
-    min-height: 48px;
-    min-width: 48px;
+    height: 52px;
+    min-height: 52px;
+    min-width: 52px;
+    padding: 0;
+    width: 52px;
   }
 
   #quickUploadButton {
     grid-column: 2;
     grid-row: 1;
+  }
+
+  #addContentButton,
+  #addIdeaButton,
+  #quickUploadButton {
+    background: rgba(255, 255, 255, 0.48);
+    border: 1px solid #ded6ca;
+    border-radius: 999px;
+    box-shadow: none;
+    color: var(--ink);
+    font-size: 1rem;
+    font-weight: 900;
+    height: 52px;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    min-height: 52px;
+    padding: 0 18px;
+    transform: none;
+    width: 100%;
   }
 
   #addContentButton {
@@ -1013,59 +979,73 @@ menu {
     grid-row: 3;
   }
 
-  .topbar-actions .primary-button,
-  .topbar-actions .secondary-button {
-    min-height: 48px;
-    width: 100%;
+  .topbar-actions .primary-button:hover,
+  .topbar-actions .secondary-button:hover,
+  .topbar-actions .icon-button:hover {
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: none;
+    transform: none;
   }
 
   .top-nav {
     display: grid;
-    gap: 10px 16px;
+    gap: 8px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     justify-items: center;
-    order: 3;
-    padding-top: 0;
+    margin-bottom: 28px;
+    overflow: visible;
+    padding: 0;
     width: 100%;
   }
 
   .top-nav a {
-    font-size: 0.72rem;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 900;
     letter-spacing: 0.12em;
+    line-height: 1;
+    text-align: center;
     white-space: nowrap;
   }
 
   .control-band {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
     padding: 16px;
   }
 
   .month-strip {
     align-items: stretch;
+    display: flex;
     flex-direction: column;
+    gap: 8px;
   }
 
   .month-tabs {
     display: grid;
-    gap: 7px;
+    gap: 8px;
     grid-template-columns: 1fr;
   }
 
   .month-tabs button,
   .ghost-button {
-    min-height: 46px;
+    border-radius: 999px;
+    font-size: 0.98rem;
+    font-weight: 900;
+    min-height: 48px;
+    padding: 0 14px;
   }
 
   .status-panel {
     min-width: 0;
   }
 
-  .summary-grid,
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
   .summary-grid {
+    display: grid;
     gap: 8px;
+    grid-template-columns: 1fr;
   }
 
   .summary-grid article {
@@ -1073,11 +1053,17 @@ menu {
   }
 
   .summary-grid span {
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
     margin-bottom: 6px;
   }
 
   .summary-grid strong {
-    font-size: 1.85rem;
+    font-size: 1.8rem;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
   }
 
   .filters-panel {
@@ -1100,6 +1086,17 @@ menu {
     grid-template-columns: 1fr 1fr;
   }
 
+  .view-tabs button {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    min-height: 42px;
+    padding: 0 8px;
+  }
+
+  table {
+    min-width: 920px;
+  }
+
   th,
   td {
     padding: 12px;
@@ -1113,20 +1110,20 @@ menu {
 @media (max-width: 420px) {
   .app-shell {
     margin: 6px;
-    padding: 18px 12px 24px;
+    padding: 20px 12px 26px;
   }
 
   .brand-lockup {
-    grid-template-columns: 42px minmax(0, 1fr);
+    grid-template-columns: 44px minmax(0, 1fr);
   }
 
   .brand-mark {
-    height: 42px;
-    width: 42px;
+    height: 44px;
+    width: 44px;
   }
 
   h1 {
-    font-size: clamp(2rem, 11vw, 2.85rem);
+    font-size: clamp(2.2rem, 11vw, 3rem);
   }
 
   .topbar-note {
@@ -1134,15 +1131,17 @@ menu {
   }
 
   .top-nav {
-    gap: 9px 8px;
+    gap: 6px;
   }
 
   .top-nav a {
-    font-size: 0.66rem;
-    letter-spacing: 0.09em;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
   }
 
-  .summary-grid article {
-    padding: 14px;
+  #addContentButton,
+  #addIdeaButton,
+  #quickUploadButton {
+    font-size: 0.94rem;
   }
 }
