@@ -376,18 +376,19 @@ menu {
 
 .summary-grid {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-  margin-bottom: 14px;
+  margin-bottom: 24px;
 }
 
 .summary-grid article {
-  background: rgba(255, 253, 248, 0.78);
-  border: 1px solid rgba(229, 220, 207, 0.9);
+  background: rgba(255, 253, 248, 0.9);
+  border: 1px solid rgba(229, 220, 207, 0.96);
   border-radius: var(--radius);
+  box-shadow: 0 12px 30px rgba(31, 27, 45, 0.06);
+  min-height: 118px;
   overflow: hidden;
-  padding: 16px;
+  padding: 20px 20px 18px;
   position: relative;
 }
 
@@ -435,6 +436,7 @@ menu {
   display: grid;
   gap: 14px;
   grid-template-columns: 270px minmax(0, 1fr);
+  margin-top: 2px;
 }
 
 .filters-panel,
@@ -776,6 +778,7 @@ tbody tr[data-open-idea] {
   margin-bottom: 8px;
   text-transform: uppercase;
 }
+
 .detail-card p,
 .detail-card a {
   color: var(--ink);
@@ -958,10 +961,12 @@ menu {
 
   .summary-grid {
     gap: 8px;
+    margin-bottom: 18px;
   }
 
   .summary-grid article {
-    padding: 14px 16px;
+    min-height: 96px;
+    padding: 16px;
   }
 
   .summary-grid span {
@@ -1015,23 +1020,13 @@ menu {
   .topbar-actions {
     display: grid;
     gap: 10px;
-    grid-template-columns: 48px minmax(0, 1fr);
     width: 100%;
   }
 
-  #quickUploadButton {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  #addContentButton {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
+  #quickUploadButton,
+  #addContentButton,
   #addIdeaButton {
-    grid-column: 1 / -1;
-    grid-row: 3;
+    width: 100%;
   }
 
   .topbar-actions .primary-button,
