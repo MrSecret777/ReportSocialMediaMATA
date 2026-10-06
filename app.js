@@ -233,6 +233,7 @@ function renderFilters() {
   fillSelect(els.pillarFilter, ["Semua", ...OPTIONS.pillar], els.pillarFilter.value || "Semua");
   const statuses = state.activeView === "ideas" ? OPTIONS.ideaStatus : OPTIONS.status;
   fillSelect(els.statusFilter, ["Semua", ...statuses], els.statusFilter.value || "Semua");
+
   els.platformFilter.disabled = state.activeView === "ideas";
 }
 
@@ -297,7 +298,6 @@ function ideaRow(item) {
     </tr>
   `;
 }
-
 function renderView() {
   const isContent = state.activeView === "content";
   els.contentView.classList.toggle("hidden", !isContent);
@@ -343,6 +343,7 @@ function contentDetails(item) {
       ${linkDetail("Live Post", item.livePostLink)}
       ${fileDetails(item.uploadedFiles)}
       <button class="primary-button" data-edit-content="${item.id}">Edit Content</button>
+      <button class="danger-button" data-delete-content="${item.id}">Padam Content</button>
     </div>
   `;
 }
@@ -357,6 +358,7 @@ function fileDetails(files = []) {
       return file.url ? `<li><a href="${file.url}" target="_blank" rel="noreferrer">${label}</a></li>` : `<li>${label}</li>`;
     })
     .join("");
+
   return `<div class="detail-card"><span>Fail Upload</span><ul class="file-list">${list}</ul></div>`;
 }
 
@@ -371,6 +373,7 @@ function ideaDetails(item) {
       ${detail("PIC", item.pic)}
       <button class="primary-button" data-edit-idea="${item.id}">Edit Idea</button>
       ${item.status === "Approved" ? `<button class="secondary-button" data-convert-idea="${item.id}">Jadikan Content Master</button>` : ""}
+      <button class="danger-button" data-delete-idea="${item.id}">Padam Idea</button>
     </div>
   `;
 }
@@ -401,6 +404,7 @@ function openForm(type, id = null) {
 
 function defaultsFor(type) {
   const today = new Date().toISOString().slice(0, 10);
+
   if (type === "content") {
     return {
       month: state.activeMonth,
@@ -423,6 +427,7 @@ function defaultsFor(type) {
       uploadedFiles: [],
     };
   }
+
   return {
     month: state.activeMonth,
     title: "",
@@ -515,6 +520,7 @@ async function submitForm(event) {
   const payload = Object.fromEntries(formData.entries());
   const attachmentFiles = formData.getAll("attachments").filter((file) => file instanceof File && file.size > 0);
   delete payload.attachments;
+
   const collectionName = editing.type === "content" ? "content" : "ideas";
   const collection = state[collectionName];
   const uploadedFiles = editing.type === "content" ? await uploadFiles(attachmentFiles, payload.title || "Content") : [];
@@ -583,6 +589,7 @@ async function uploadFiles(files, contextTitle) {
   }
 
   const uploaded = [];
+
   for (const file of files) {
     try {
       const result = await postToBackend({
@@ -593,6 +600,7 @@ async function uploadFiles(files, contextTitle) {
         mimeType: file.type || "application/octet-stream",
         data: await fileToBase64(file),
       });
+
       uploaded.push({
         name: file.name,
         size: file.size,
@@ -612,9 +620,9 @@ async function uploadFiles(files, contextTitle) {
       });
     }
   }
+
   return uploaded;
 }
-
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -626,6 +634,7 @@ function fileToBase64(file) {
 
 async function syncRecord(record, type) {
   if (!apiBaseUrl) return;
+
   try {
     await postToBackend({
       action: type === "content" ? "saveContent" : "saveIdea",
@@ -641,10 +650,13 @@ async function postToBackend(payload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+
   const result = await response.json();
+
   if (!response.ok || result.ok === false) {
     throw new Error(result.error || "Backend request failed");
   }
+
   return result;
 }
 
@@ -665,10 +677,12 @@ async function convertIdea(id) {
     creativeBrief: idea.objective,
     notes: `Dari Idea Log. Feedback: ${idea.feedback || "-"}`,
   };
+
   state.content.unshift(newRecord);
   state.activeMonth = idea.month;
   state.activeView = "content";
   closeDrawer();
+
   await syncRecord(newRecord, "content");
   render();
 }
@@ -676,10 +690,39 @@ async function convertIdea(id) {
 function addMonth() {
   const label = prompt("Masukkan nama bulan, contoh: Januari 2027");
   if (!label) return;
+
   const id = label.toLowerCase().replace(/\s+/g, "-");
   state.months.push({ id, label });
   state.activeMonth = id;
   render();
+}
+
+async function deleteItem(type, id) {
+  const collectionName = type === "content" ? "content" : "ideas";
+  const collection = state[collectionName];
+  const item = collection.find((entry) => entry.id === id);
+  if (!item) return;
+
+  const label = type === "content" ? "content" : "idea";
+  const message =
+    type === "content"
+      ? `Padam content "${item.title}"? Rekod Google Sheets akan dikosongkan dan fail yang diupload melalui website akan dipadam dari Google Drive.`
+      : `Padam idea "${item.title}"? Rekod Google Sheets akan dikosongkan.`;
+
+  if (!confirm(message)) return;
+
+  if (apiBaseUrl) {
+    await postToBackend({
+      action: type === "content" ? "deleteContent" : "deleteIdea",
+      record: item,
+    });
+  }
+
+  state[collectionName] = collection.filter((entry) => entry.id !== id);
+  closeDrawer();
+  render();
+
+  alert(`${label.charAt(0).toUpperCase() + label.slice(1)} telah dipadam.`);
 }
 
 document.addEventListener("click", (event) => {
@@ -717,6 +760,18 @@ document.addEventListener("click", (event) => {
   const convert = event.target.closest("[data-convert-idea]");
   if (convert && !convert.disabled) {
     convertIdea(convert.dataset.convertIdea);
+    return;
+  }
+
+  const deleteContent = event.target.closest("[data-delete-content]");
+  if (deleteContent) {
+    deleteItem("content", deleteContent.dataset.deleteContent);
+    return;
+  }
+
+  const deleteIdea = event.target.closest("[data-delete-idea]");
+  if (deleteIdea) {
+    deleteItem("idea", deleteIdea.dataset.deleteIdea);
   }
 });
 
@@ -742,13 +797,17 @@ els.resetFiltersButton.addEventListener("click", () => {
 
 els.addContentButton.addEventListener("click", () => openForm("content"));
 els.addIdeaButton.addEventListener("click", () => openForm("idea"));
+
 els.quickUploadButton.addEventListener("click", () => els.quickUploadInput.click());
 els.quickUploadInput.addEventListener("change", quickUpload);
+
 els.addMonthButton.addEventListener("click", addMonth);
 els.closeDrawerButton.addEventListener("click", closeDrawer);
+
 els.detailDrawer.addEventListener("click", (event) => {
   if (event.target === els.detailDrawer) closeDrawer();
 });
+
 els.itemForm.addEventListener("submit", submitForm);
 
 render();
