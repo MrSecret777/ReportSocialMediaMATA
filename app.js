@@ -155,7 +155,6 @@ const els = {
   itemForm: document.querySelector("#itemForm"),
   dialogTitle: document.querySelector("#dialogTitle"),
   formFields: document.querySelector("#formFields"),
-  exportButton: document.querySelector("#exportButton"),
   metrics: {
     total: document.querySelector("#metricTotal"),
     scheduled: document.querySelector("#metricScheduled"),
@@ -684,16 +683,6 @@ function addMonth() {
   render();
 }
 
-function exportState() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "mata-social-media-data-contoh.json";
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
 document.addEventListener("click", (event) => {
   const monthButton = event.target.closest("[data-month]");
   if (monthButton) {
@@ -762,6 +751,5 @@ els.detailDrawer.addEventListener("click", (event) => {
   if (event.target === els.detailDrawer) closeDrawer();
 });
 els.itemForm.addEventListener("submit", submitForm);
-els.exportButton.addEventListener("click", exportState);
 
 render();
