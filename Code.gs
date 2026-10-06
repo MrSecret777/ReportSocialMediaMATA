@@ -154,7 +154,6 @@ function deleteIdea(record) {
 
 function listMonth(month) {
   const sheet = getMonthSheet(month);
-
   return {
     ok: true,
     sheetName: sheet.getName(),
@@ -213,7 +212,6 @@ function toIdeaRow(record) {
 
 function readContent(sheet) {
   const values = sheet.getRange(CONTENT.startRow, 1, CONTENT.endRow - CONTENT.startRow + 1, CONTENT.width).getValues();
-
   return values
     .filter((row) => row[0])
     .map((row) => ({
@@ -241,12 +239,12 @@ function readContent(sheet) {
       approvalDate: formatSheetDate(row[21]),
       ideaId: row[22],
       nextAction: row[23],
+      uploadedFiles: parseUploadedFileLinks(row[8]),
     }));
 }
 
 function readIdeas(sheet) {
   const values = sheet.getRange(IDEAS.startRow, 1, IDEAS.endRow - IDEAS.startRow + 1, IDEAS.width).getValues();
-
   return values
     .filter((row) => row[0])
     .map((row) => ({
@@ -304,6 +302,21 @@ function trashUploadedFiles(files) {
   return trashed;
 }
 
+function parseUploadedFileLinks(value) {
+  if (!value) return [];
+
+  return String(value)
+    .split(/\n+/)
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .map((url, index) => ({
+      name: "Fail upload " + (index + 1),
+      url,
+      fileId: extractDriveFileId(url),
+      status: "uploaded",
+    }));
+}
+
 function extractDriveFileId(url) {
   if (!url) return "";
 
@@ -324,17 +337,14 @@ function extractDriveFileId(url) {
 
 function findRowById(sheet, id, startRow, endRow) {
   if (!id) return null;
-
   const values = sheet.getRange(startRow, 1, endRow - startRow + 1, 1).getValues();
   const index = values.findIndex((row) => row[0] === id);
-
   return index >= 0 ? startRow + index : null;
 }
 
 function findFirstEmptyRow(sheet, startRow, endRow) {
   const values = sheet.getRange(startRow, 1, endRow - startRow + 1, 1).getValues();
   const index = values.findIndex((row) => !row[0]);
-
   return index >= 0 ? startRow + index : null;
 }
 
@@ -365,7 +375,6 @@ function buildSafeFileName(fileName, contextTitle) {
   const timestamp = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", "yyyyMMdd-HHmmss");
   const cleanContext = cleanFileSegment(contextTitle || "MATA");
   const cleanName = cleanFileSegment(fileName || "upload");
-
   return timestamp + " - " + cleanContext + " - " + cleanName;
 }
 
@@ -393,11 +402,9 @@ function padRow(values, width) {
 
 function formatSheetDate(value) {
   if (!value) return "";
-
   if (Object.prototype.toString.call(value) === "[object Date]") {
     return Utilities.formatDate(value, "Asia/Kuala_Lumpur", "yyyy-MM-dd");
   }
-
   return value;
 }
 
