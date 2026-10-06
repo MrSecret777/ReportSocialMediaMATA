@@ -233,7 +233,6 @@ function renderFilters() {
   fillSelect(els.pillarFilter, ["Semua", ...OPTIONS.pillar], els.pillarFilter.value || "Semua");
   const statuses = state.activeView === "ideas" ? OPTIONS.ideaStatus : OPTIONS.status;
   fillSelect(els.statusFilter, ["Semua", ...statuses], els.statusFilter.value || "Semua");
-
   els.platformFilter.disabled = state.activeView === "ideas";
 }
 
