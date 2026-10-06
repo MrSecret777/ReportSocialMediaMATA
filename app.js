@@ -126,6 +126,7 @@ const storageKey = "mata-social-dashboard-state";
 const apiBaseUrl = window.MATA_CONFIG?.apiBaseUrl || "";
 let state = loadState();
 let editing = null;
+let backendReady = false;
 
 const els = {
   monthTabs: document.querySelector("#monthTabs"),
@@ -205,6 +206,56 @@ function matchesFilters(item, isIdea = false) {
   if (!isIdea && status !== "Semua" && item.status !== status) return false;
   if (isIdea && status !== "Semua" && item.status !== status) return false;
   return true;
+}
+
+async function loadMonthFromBackend(month = state.activeMonth, options = {}) {
+  if (!apiBaseUrl) return false;
+
+  try {
+    const result = await postToBackend({
+      action: "listMonth",
+      month,
+    });
+
+    const backendContent = (result.content || []).map((item) => normalizeContentRecord(item, month));
+    const backendIdeas = (result.ideas || []).map((item) => normalizeIdeaRecord(item, month));
+
+    state.content = [
+      ...state.content.filter((item) => item.month !== month),
+      ...backendContent,
+    ];
+    state.ideas = [
+      ...state.ideas.filter((item) => item.month !== month),
+      ...backendIdeas,
+    ];
+    backendReady = true;
+    render();
+    return true;
+  } catch (error) {
+    backendReady = false;
+    if (!options.silent) {
+      alert(`Data backend tidak dapat dibaca. Website guna data sementara dalam browser: ${error.message}`);
+    }
+    render();
+    return false;
+  }
+}
+
+function normalizeContentRecord(item, month) {
+  return {
+    ...defaultsFor("content"),
+    ...item,
+    month,
+    uploadedFiles: Array.isArray(item.uploadedFiles) ? item.uploadedFiles : [],
+  };
+}
+
+function normalizeIdeaRecord(item, month) {
+  return {
+    ...defaultsFor("idea"),
+    ...item,
+    month,
+  };
 }
 
 function render() {
@@ -298,6 +349,7 @@ function ideaRow(item) {
     </tr>
   `;
 }
+
 function renderView() {
   const isContent = state.activeView === "content";
   els.contentView.classList.toggle("hidden", !isContent);
@@ -358,7 +410,6 @@ function fileDetails(files = []) {
       return file.url ? `<li><a href="${file.url}" target="_blank" rel="noreferrer">${label}</a></li>` : `<li>${label}</li>`;
     })
     .join("");
-
   return `<div class="detail-card"><span>Fail Upload</span><ul class="file-list">${list}</ul></div>`;
 }
 
@@ -404,7 +455,6 @@ function openForm(type, id = null) {
 
 function defaultsFor(type) {
   const today = new Date().toISOString().slice(0, 10);
-
   if (type === "content") {
     return {
       month: state.activeMonth,
@@ -427,7 +477,6 @@ function defaultsFor(type) {
       uploadedFiles: [],
     };
   }
-
   return {
     month: state.activeMonth,
     title: "",
@@ -520,10 +569,10 @@ async function submitForm(event) {
   const payload = Object.fromEntries(formData.entries());
   const attachmentFiles = formData.getAll("attachments").filter((file) => file instanceof File && file.size > 0);
   delete payload.attachments;
-
   const collectionName = editing.type === "content" ? "content" : "ideas";
   const collection = state[collectionName];
   const uploadedFiles = editing.type === "content" ? await uploadFiles(attachmentFiles, payload.title || "Content") : [];
+  let syncSuccess = true;
 
   if (editing.id) {
     const index = collection.findIndex((entry) => entry.id === editing.id);
@@ -532,7 +581,7 @@ async function submitForm(event) {
       ...payload,
       uploadedFiles: [...(collection[index].uploadedFiles || []), ...uploadedFiles],
     };
-    await syncRecord(collection[index], editing.type);
+    syncSuccess = await syncRecord(collection[index], editing.type);
   } else {
     const newRecord = {
       ...defaultsFor(editing.type),
@@ -542,12 +591,16 @@ async function submitForm(event) {
       uploadedFiles,
     };
     collection.unshift(newRecord);
-    await syncRecord(newRecord, editing.type);
+    syncSuccess = await syncRecord(newRecord, editing.type);
   }
 
   els.itemDialog.close();
   closeDrawer();
-  render();
+  if (apiBaseUrl && syncSuccess) {
+    await loadMonthFromBackend(state.activeMonth, { silent: true });
+  } else {
+    render();
+  }
 }
 
 async function quickUpload() {
@@ -570,8 +623,12 @@ async function quickUpload() {
   state.content.unshift(newRecord);
   state.activeView = "content";
   els.quickUploadInput.value = "";
-  await syncRecord(newRecord, "content");
-  render();
+  const syncSuccess = await syncRecord(newRecord, "content");
+  if (apiBaseUrl && syncSuccess) {
+    await loadMonthFromBackend(state.activeMonth, { silent: true });
+  } else {
+    render();
+  }
 }
 
 async function uploadFiles(files, contextTitle) {
@@ -589,7 +646,6 @@ async function uploadFiles(files, contextTitle) {
   }
 
   const uploaded = [];
-
   for (const file of files) {
     try {
       const result = await postToBackend({
@@ -600,7 +656,6 @@ async function uploadFiles(files, contextTitle) {
         mimeType: file.type || "application/octet-stream",
         data: await fileToBase64(file),
       });
-
       uploaded.push({
         name: file.name,
         size: file.size,
@@ -620,9 +675,9 @@ async function uploadFiles(files, contextTitle) {
       });
     }
   }
-
   return uploaded;
 }
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -633,15 +688,16 @@ function fileToBase64(file) {
 }
 
 async function syncRecord(record, type) {
-  if (!apiBaseUrl) return;
-
+  if (!apiBaseUrl) return false;
   try {
     await postToBackend({
       action: type === "content" ? "saveContent" : "saveIdea",
       record,
     });
+    return true;
   } catch (error) {
     alert(`Data disimpan sebagai draft dalam browser, tetapi sync ke backend gagal: ${error.message}`);
+    return false;
   }
 }
 
@@ -650,13 +706,10 @@ async function postToBackend(payload) {
     method: "POST",
     body: JSON.stringify(payload),
   });
-
   const result = await response.json();
-
   if (!response.ok || result.ok === false) {
     throw new Error(result.error || "Backend request failed");
   }
-
   return result;
 }
 
@@ -677,20 +730,21 @@ async function convertIdea(id) {
     creativeBrief: idea.objective,
     notes: `Dari Idea Log. Feedback: ${idea.feedback || "-"}`,
   };
-
   state.content.unshift(newRecord);
   state.activeMonth = idea.month;
   state.activeView = "content";
   closeDrawer();
-
-  await syncRecord(newRecord, "content");
-  render();
+  const syncSuccess = await syncRecord(newRecord, "content");
+  if (apiBaseUrl && syncSuccess) {
+    await loadMonthFromBackend(state.activeMonth, { silent: true });
+  } else {
+    render();
+  }
 }
 
 function addMonth() {
   const label = prompt("Masukkan nama bulan, contoh: Januari 2027");
   if (!label) return;
-
   const id = label.toLowerCase().replace(/\s+/g, "-");
   state.months.push({ id, label });
   state.activeMonth = id;
@@ -720,16 +774,20 @@ async function deleteItem(type, id) {
 
   state[collectionName] = collection.filter((entry) => entry.id !== id);
   closeDrawer();
-  render();
-
+  if (apiBaseUrl) {
+    await loadMonthFromBackend(state.activeMonth, { silent: true });
+  } else {
+    render();
+  }
   alert(`${label.charAt(0).toUpperCase() + label.slice(1)} telah dipadam.`);
 }
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const monthButton = event.target.closest("[data-month]");
   if (monthButton) {
     state.activeMonth = monthButton.dataset.month;
     render();
+    await loadMonthFromBackend(state.activeMonth, { silent: true });
     return;
   }
 
@@ -797,17 +855,14 @@ els.resetFiltersButton.addEventListener("click", () => {
 
 els.addContentButton.addEventListener("click", () => openForm("content"));
 els.addIdeaButton.addEventListener("click", () => openForm("idea"));
-
 els.quickUploadButton.addEventListener("click", () => els.quickUploadInput.click());
 els.quickUploadInput.addEventListener("change", quickUpload);
-
 els.addMonthButton.addEventListener("click", addMonth);
 els.closeDrawerButton.addEventListener("click", closeDrawer);
-
 els.detailDrawer.addEventListener("click", (event) => {
   if (event.target === els.detailDrawer) closeDrawer();
 });
-
 els.itemForm.addEventListener("submit", submitForm);
 
 render();
+loadMonthFromBackend(state.activeMonth, { silent: true });
