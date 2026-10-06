@@ -47,6 +47,14 @@ function doPost(e) {
       return json(saveIdea(payload.record));
     }
 
+    if (payload.action === "deleteContent") {
+      return json(deleteContent(payload.record));
+    }
+
+    if (payload.action === "deleteIdea") {
+      return json(deleteIdea(payload.record));
+    }
+
     if (payload.action === "listMonth") {
       return json(listMonth(payload.month));
     }
@@ -112,8 +120,41 @@ function saveIdea(record) {
   };
 }
 
+function deleteContent(record) {
+  requireFields(record, ["id", "month"]);
+
+  const sheet = getMonthSheet(record.month);
+  const rowNumber = clearRowById(sheet, record.id, CONTENT.startRow, CONTENT.endRow, CONTENT.width);
+  const trashedFiles = trashUploadedFiles(record.uploadedFiles || []);
+
+  return {
+    ok: true,
+    type: "content",
+    sheetName: sheet.getName(),
+    rowNumber,
+    trashedFiles,
+    id: record.id,
+  };
+}
+
+function deleteIdea(record) {
+  requireFields(record, ["id", "month"]);
+
+  const sheet = getMonthSheet(record.month);
+  const rowNumber = clearRowById(sheet, record.id, IDEAS.startRow, IDEAS.endRow, IDEAS.width);
+
+  return {
+    ok: true,
+    type: "idea",
+    sheetName: sheet.getName(),
+    rowNumber,
+    id: record.id,
+  };
+}
+
 function listMonth(month) {
   const sheet = getMonthSheet(month);
+
   return {
     ok: true,
     sheetName: sheet.getName(),
@@ -172,6 +213,7 @@ function toIdeaRow(record) {
 
 function readContent(sheet) {
   const values = sheet.getRange(CONTENT.startRow, 1, CONTENT.endRow - CONTENT.startRow + 1, CONTENT.width).getValues();
+
   return values
     .filter((row) => row[0])
     .map((row) => ({
@@ -204,6 +246,7 @@ function readContent(sheet) {
 
 function readIdeas(sheet) {
   const values = sheet.getRange(IDEAS.startRow, 1, IDEAS.endRow - IDEAS.startRow + 1, IDEAS.width).getValues();
+
   return values
     .filter((row) => row[0])
     .map((row) => ({
@@ -232,16 +275,66 @@ function upsertRowById(sheet, id, startRow, endRow, rowValues) {
   return rowNumber;
 }
 
+function clearRowById(sheet, id, startRow, endRow, width) {
+  const rowNumber = findRowById(sheet, id, startRow, endRow);
+
+  if (!rowNumber) {
+    throw new Error("Record not found: " + id);
+  }
+
+  sheet.getRange(rowNumber, 1, 1, width).clearContent();
+  return rowNumber;
+}
+
+function trashUploadedFiles(files) {
+  const trashed = [];
+
+  files.forEach((file) => {
+    const fileId = file.fileId || extractDriveFileId(file.url);
+    if (!fileId) return;
+
+    try {
+      DriveApp.getFileById(fileId).setTrashed(true);
+      trashed.push(fileId);
+    } catch (error) {
+      // Keep deleting the sheet record even if a Drive file cannot be trashed.
+    }
+  });
+
+  return trashed;
+}
+
+function extractDriveFileId(url) {
+  if (!url) return "";
+
+  const text = String(url);
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+    /\/open\?id=([a-zA-Z0-9_-]+)/,
+  ];
+
+  for (let i = 0; i < patterns.length; i += 1) {
+    const match = text.match(patterns[i]);
+    if (match) return match[1];
+  }
+
+  return "";
+}
+
 function findRowById(sheet, id, startRow, endRow) {
   if (!id) return null;
+
   const values = sheet.getRange(startRow, 1, endRow - startRow + 1, 1).getValues();
   const index = values.findIndex((row) => row[0] === id);
+
   return index >= 0 ? startRow + index : null;
 }
 
 function findFirstEmptyRow(sheet, startRow, endRow) {
   const values = sheet.getRange(startRow, 1, endRow - startRow + 1, 1).getValues();
   const index = values.findIndex((row) => !row[0]);
+
   return index >= 0 ? startRow + index : null;
 }
 
@@ -272,6 +365,7 @@ function buildSafeFileName(fileName, contextTitle) {
   const timestamp = Utilities.formatDate(new Date(), "Asia/Kuala_Lumpur", "yyyyMMdd-HHmmss");
   const cleanContext = cleanFileSegment(contextTitle || "MATA");
   const cleanName = cleanFileSegment(fileName || "upload");
+
   return timestamp + " - " + cleanContext + " - " + cleanName;
 }
 
@@ -299,9 +393,11 @@ function padRow(values, width) {
 
 function formatSheetDate(value) {
   if (!value) return "";
+
   if (Object.prototype.toString.call(value) === "[object Date]") {
     return Utilities.formatDate(value, "Asia/Kuala_Lumpur", "yyyy-MM-dd");
   }
+
   return value;
 }
 
