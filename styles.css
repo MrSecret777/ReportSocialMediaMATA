@@ -53,6 +53,10 @@ button:disabled {
   opacity: 0.45;
 }
 
+#exportButton {
+  display: none;
+}
+
 .app-shell {
   background:
     linear-gradient(90deg, rgba(47, 155, 98, 0.22), transparent 1px) 0 0 / 100% 100% no-repeat,
@@ -862,7 +866,6 @@ menu {
   }
 }
 
-/* Mobile view */
 @media (max-width: 640px) {
   body {
     background: #252525;
@@ -924,35 +927,15 @@ menu {
   .topbar-actions {
     display: grid;
     gap: 10px;
-    grid-template-columns: 52px 1fr;
+    grid-template-columns: 1fr;
     margin-bottom: 26px;
     width: 100%;
   }
 
-  .topbar-actions .icon-button {
-    aspect-ratio: 1;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid #ded6ca;
-    border-radius: 999px;
-    box-shadow: none;
-    color: var(--ink);
-    grid-column: 1;
-    grid-row: 1;
-    height: 52px;
-    min-height: 52px;
-    min-width: 52px;
-    padding: 0;
-    width: 52px;
-  }
-
-  #quickUploadButton {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
+  #quickUploadButton,
   #addContentButton,
-  #addIdeaButton,
-  #quickUploadButton {
+  #addIdeaButton {
+    grid-column: 1;
     background: rgba(255, 255, 255, 0.48);
     border: 1px solid #ded6ca;
     border-radius: 999px;
@@ -969,19 +952,20 @@ menu {
     width: 100%;
   }
 
+  #quickUploadButton {
+    grid-row: 1;
+  }
+
   #addContentButton {
-    grid-column: 1 / -1;
     grid-row: 2;
   }
 
   #addIdeaButton {
-    grid-column: 1 / -1;
     grid-row: 3;
   }
 
   .topbar-actions .primary-button:hover,
-  .topbar-actions .secondary-button:hover,
-  .topbar-actions .icon-button:hover {
+  .topbar-actions .secondary-button:hover {
     background: rgba(255, 255, 255, 0.62);
     box-shadow: none;
     transform: none;
